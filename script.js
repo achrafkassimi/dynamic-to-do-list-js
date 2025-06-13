@@ -1,66 +1,63 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const addButton = document.getElementById('add-task-btn');
-    const taskInput = document.getElementById('task-input');
-    const taskList = document.getElementById('task-list');
+    loadTasks();
+    // Other initialization code
+});
 
-    // Load tasks from localStorage on startup
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks.forEach(taskText => renderTask(taskText));
+const addButton = document.getElementById('add-task-btn');
+const taskInput = document.getElementById('task-input');
+const taskList = document.getElementById('task-list');
+let tasks = []; // Initialize tasks array
 
-    function saveTasks() {
-        const allTasks = Array.from(taskList.children).map(li => li.firstChild.textContent);
-        localStorage.setItem('tasks', JSON.stringify(allTasks));
-    }
+function loadTasks() {
+    const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    storedTasks.forEach(taskText => addTask(taskText, false)); // 'false' indicates not to save again to Local Storage
+}
 
-    function renderTask(taskText) {
-        const listItem = document.createElement('li');
+function addTask(taskText, save = true) {
+    const li = document.createElement('li');
+    li.textContent = taskText;
 
-        const taskSpan = document.createElement('span');
-        taskSpan.textContent = taskText;
-
-        const editButton = document.createElement('button');
-        editButton.textContent = 'Edit';
-        editButton.className = 'remove-btn';
-        editButton.onclick = () => {
-            const newTask = prompt('Edit task:', taskSpan.textContent);
-            if (newTask !== null && newTask.trim() !== '') {
-                taskSpan.textContent = newTask.trim();
-                saveTasks();
-            }
-        };
-
-        const removeButton = document.createElement('button');
-        removeButton.textContent = 'Remove';
-        removeButton.className = 'remove-btn';
-        removeButton.onclick = () => {
-            taskList.removeChild(listItem);
-            saveTasks();
-        };
-
-        listItem.appendChild(taskSpan);
-        listItem.appendChild(editButton);
-        listItem.appendChild(removeButton);
-        taskList.appendChild(listItem);
-    }
-
-    function addTask() {
-        const taskText = taskInput.value.trim();
-
-        if (taskText === "") {
-            alert("Please enter a task.");
-            return;
-        }
-
-        renderTask(taskText);
-        saveTasks();
-        taskInput.value = '';
-    }
-
-    addButton.addEventListener('click', addTask);
-
-    taskInput.addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') {
-            addTask();
-        }
+    const removeButton = document.createElement('button');
+    removeButton.textContent = 'Remove';
+    removeButton.classList.add('remove-btn');
+    removeButton.addEventListener('click', function() {
+        li.remove();
+        removeTask(taskText);
     });
+
+    li.appendChild(removeButton);
+    taskList.appendChild(li);
+
+    tasks.push(taskText); // Add task to tasks array
+
+    if (save) {
+        localStorage.setItem('tasks', JSON.stringify(tasks)); // Save updated tasks to Local Storage
+    }
+}
+
+function removeTask(taskText) {
+    tasks = tasks.filter(task => task !== taskText); // Remove task from tasks array
+    localStorage.setItem('tasks', JSON.stringify(tasks)); // Update tasks in Local Storage
+}
+
+addButton.addEventListener('click', () => {
+    const taskText = taskInput.value.trim();
+    if (taskText !== '') {
+        addTask(taskText);
+        taskInput.value = '';
+    } else {
+        alert('Please enter a task!');
+    }
+});
+
+taskInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        const taskText = taskInput.value.trim();
+        if (taskText !== '') {
+            addTask(taskText);
+            taskInput.value = '';
+        } else {
+            alert('Please enter a task!');
+        }
+    }
 });
